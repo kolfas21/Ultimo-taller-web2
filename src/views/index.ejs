@@ -1,0 +1,362 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Todo List</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+  <link rel="icon" type="image/x-icon" href="/favicon.ico">
+  <style>
+    body {
+      font-family: 'Roboto', sans-serif;
+      background-color: #f8f9fa;
+    }
+    .container {
+      background-color: #fff;
+      border-radius: 10px;
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+      padding: 20px;
+    }
+    .btn-info {
+      background-color: #17a2b8;
+      border-color: #17a2b8;
+    }
+    .btn-info:hover {
+      background-color: #138496;
+      border-color: #117a8b;
+    }
+    .task-buttons button {
+      margin-right: 5px;
+    }
+    .list-group-item {
+      transition: transform 0.2s;
+      background-color: #e9f7fa;
+      border-radius: 10px;
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+      margin-bottom: 10px;
+      padding: 20px;
+    }
+    .list-group-item:hover {
+      transform: scale(1.02);
+    }
+    .task-title {
+      font-size: 1.1em;
+    }
+    .badge-success {
+      background-color: #28a745;
+    }
+    .badge-secondary {
+      background-color: #6c757d;
+    }
+    /* Estilo personalizado para el formulario de agregar/buscar tarea */
+    .task-form {
+      background-color: #e9f7fa;
+      padding: 20px;
+      border-radius: 10px;
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    }
+    .task-form h1 {
+      color: #17a2b8;
+      font-weight: bold;
+      margin-bottom: 20px;
+    }
+    .task-form label {
+      color: #007b8a;
+    }
+    .task-form .form-control {
+      border: 1px solid #17a2b8;
+    }
+    .task-form .btn-info {
+      background-color: #007b8a;
+      border-color: #007b8a;
+    }
+    .task-form .btn-info:hover {
+      background-color: #005f6b;
+      border-color: #005f6b;
+    }
+    /* Estilo personalizado para el título "Todas las Tareas" */
+    .all-tasks-title {
+      color: #17a2b8;
+      font-weight: bold;
+      text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.1);
+      margin-top: 50px;
+    }
+  </style>
+</head>
+<body>
+    
+  <div class="container my-5">
+    <!-- Sección de Agregar o Buscar Tarea -->
+    <div class="task-form mb-4">
+      <h1>Agregar o Buscar Tarea</h1>
+      <form action="/api/v1/todospanel" method="post" class="mb-4">
+        <div class="row g-3 align-items-center">
+          <div class="col-md-4">
+            <label for="title" class="form-label">Título:</label>
+            <input type="text" id="title" name="title" class="form-control" required>
+          </div>
+          <div class="col-md-3">
+            <label for="dueDate" class="form-label">Fecha de Entrega:</label>
+            <input type="date" id="dueDate" name="dueDate" class="form-control" required>
+          </div>
+          <div class="col-md-3 mt-4">
+            <button type="submit" class="btn btn-info btn-sm"><i class="fas fa-plus"></i> Agregar Tarea</button>
+          </div>
+        </div>
+      </form>
+      <div class="row g-3 align-items-center">
+        <div class="col-md-4">
+          <input type="text" id="searchById" class="form-control" placeholder="Buscar por ID...">
+        </div>
+        <div class="col-md-3">
+          <button class="btn btn-info btn-sm" type="button" onclick="searchTask()"><i class="fas fa-search"></i> Buscar</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Lista de tareas -->
+    <h2 class="all-tasks-title">Todas las Tareas</h2>
+    <ul class="list-group" id="todoList">
+      <% todos.forEach(todo => { %>
+        <li class="list-group-item d-flex flex-column flex-md-row justify-content-between align-items-md-center">
+          <div>
+            <span class="fw-bold">ID: <%= todo.id %></span><br>
+            <span class="fw-bold">Título:</span>
+            <span class="task-title"><%= todo.title %></span><br>
+            <% if (todo.dueDate) { %>
+              <span class="fw-bold">Fecha de Entrega:</span>
+              <span class="task-dueDate"><%= new Date(todo.dueDate).toISOString().split('T')[0] %></span><br>
+            <% } else { %>
+              <span class="fw-bold">Fecha de Entrega:</span> No Encontrada<br>
+            <% } %>
+            <span class="fw-bold">Estado:</span>
+            <span class="badge bg-<%= todo.completed ? 'success' : 'secondary' %>">
+              <%= todo.completed ? "Completado" : "No completado" %>
+            </span>
+          </div>
+          <div class="task-buttons mt-3 mt-md-0 d-flex flex-wrap gap-2">
+            <button class="btn btn-warning btn-sm" onclick="editTask('<%= todo.id %>')" data-bs-toggle="modal" data-bs-target="#editModal"><i class="fas fa-edit"></i> Editar</button>
+            <button class="btn btn-danger btn-sm" onclick="deleteTask('<%= todo.id %>')"><i class="fas fa-trash-alt"></i> Eliminar</button>
+            <button class="btn btn-info btn-sm" onclick="toggleCompleteTask('<%= todo.id %>', '<%= todo.completed %>')"><i class="fas fa-check"></i> <%= todo.completed ? 'Descompletar' : 'Completar' %></button>
+          </div>
+        </li>
+      <% }); %>
+    </ul>
+  </div>
+
+  <!-- Modal para editar tarea -->
+  <div class="modal fade" id="editModal" tabindex="-1" aria-labelledby="editModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="editModalLabel">Editar Tarea</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+          <form id="editForm">
+            <div class="mb-3">
+                <label for="editId" class="form-label">ID:</label>
+                <input type="text" class="form-control" id="editId" name="editId" disabled>
+              </div>
+            <div class="mb-3">
+              <label for="editTitle" class="form-label">Título:</label>
+              <input type="text" class="form-control" id="editTitle" name="editTitle" required>
+            </div>
+            <div class="mb-3">
+              <label for="editDueDate" class="form-label">Fecha de Entrega:</label>
+              <input type="date" class="form-control" id="editDueDate" name="editDueDate">
+            </div>
+            <button type="submit" class="btn btn-primary" id="saveChangesBtn">Guardar Cambios</button>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal para detalles de la tarea encontrada por ID -->
+  <div class="modal fade" id="detailsModal" tabindex="-1" aria-labelledby="detailsModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="detailsModalLabel">Detalles de la Tarea</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+          <div id="taskDetailsContent">
+            Aquí se insertará dinámicamente la información de la tarea 
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+  <script>
+    // Function to handle editing a task
+    async function editTask(todoId) {
+      try {
+        const response = await fetch(`/api/v1/todospanel/${todoId}`);
+        if (response.ok) {
+          const todo = await response.json();
+          document.getElementById("editId").value = todo.id; // Mostrar el ID pero no permitir edición
+          document.getElementById("editTitle").value = todo.title;
+          document.getElementById("editDueDate").value = todo.dueDate ? new Date(todo.dueDate).toISOString().split("T")[0] : "";
+        } else {
+          console.error("Task not found");
+        }
+      } catch (error) {
+        console.error("Error editing task:", error);
+      }
+    }
+
+    // Handle form submission to update a task
+    document.getElementById("editForm").addEventListener("submit", async function(event) {
+      event.preventDefault();
+      const todoId = document.getElementById("editId").value; // Obtener el ID de la tarea desde el campo deshabilitado
+
+      const formData = {
+        title: document.getElementById("editTitle").value,
+        dueDate: document.getElementById("editDueDate").value
+      };
+
+      try {
+        const response = await fetch(`/api/v1/todospanel/${todoId}/edit`, {
+          method: "PUT",
+          body: JSON.stringify(formData),
+          headers: {
+            "Content-Type": "application/json"
+          }
+        });
+
+        if (response.ok) {
+          const data = await response.json();
+          console.log("Tarea actualizada:", data);
+          showSuccessMessage("Tarea actualizada correctamente");
+          location.reload(); // Recargar la página después de la actualización
+        } else {
+          const errorData = await response.json();
+          console.error("Error al actualizar tarea:", errorData);
+          showErrorMessage("Error al actualizar la tarea");
+        }
+      } catch (error) {
+        console.error("Error en la solicitud:", error.message);
+        showErrorMessage("Error en la solicitud de actualización");
+      }
+    });
+
+    // Función para completar/descompletar tarea
+    async function toggleCompleteTask(todoId, currentStatus) {
+      const newStatus = !currentStatus; // Invertir el estado actual
+      const formData = {
+        completed: newStatus
+      };
+
+      try {
+        const response = await fetch(`/api/v1/todospanel/${todoId}/toggleComplete`, {
+          method: "PUT",
+          body: JSON.stringify(formData),
+          headers: {
+            "Content-Type": "application/json"
+          }
+        });
+
+        if (response.ok) {
+          console.log(`Tarea ${newStatus ? 'completada' : 'descompletada'} correctamente`);
+          showSuccessMessage(`Tarea ${newStatus ? 'completada' : 'descompletada'} correctamente`);
+          location.reload(); // Recargar la página después de la actualización
+        } else {
+          console.error("Error al actualizar el estado de la tarea");
+          showErrorMessage("Error al actualizar el estado de la tarea");
+        }
+      } catch (error) {
+        console.error("Error en la solicitud:", error.message);
+        showErrorMessage("Error en la solicitud de actualización");
+      }
+    }
+
+    // Función para eliminar tarea
+    function deleteTask(todoId) {
+      if (confirm("¿Estás seguro de que deseas eliminar esta tarea?")) {        
+        fetch(`/api/v1/todospanel/${todoId}/delete`, {
+          method: "DELETE"
+        })
+        .then(response => {
+          if (response.ok) {
+            console.log("Tarea eliminada correctamente");
+            showSuccessMessage("Tarea eliminada correctamente");
+            location.reload(); // Recargar la página después de la eliminación
+          } else {
+            console.error("Error al eliminar la tarea");
+            showErrorMessage("Error al eliminar la tarea");
+          }
+        })
+        .catch(error => {
+          console.error("Error en la solicitud:", error.message);
+          showErrorMessage("Error en la solicitud de eliminación");
+        });
+      }
+      location.reload(); 
+    }
+
+    // Función para buscar tarea por ID
+    function searchTask() {
+      const searchId = document.getElementById("searchById").value.trim();
+
+      fetch(`/api/v1/todospanel/${searchId}`)
+        .then(response => {
+          if (response.ok) {
+            return response.json();
+          } else {
+            throw new Error("Error al buscar la tarea");
+          }
+        })
+        .then(data => {
+          const detailsContent = `
+            <p><strong>ID:</strong> ${data.id}</p>
+            <p><strong>Título:</strong> ${data.title}</p>
+            ${data.dueDate ? `<p><strong>Fecha de Entrega:</strong> ${new Date(data.dueDate).toISOString().split("T")[0]}</p>` : "<p><strong>Fecha de Entrega:</strong> No Encontrada</p>"}
+            <p><strong>Completado:</strong> ${data.completed ? "Sí" : "No"}</p>
+          `;
+          document.getElementById("taskDetailsContent").innerHTML = detailsContent;
+          const detailsModal = new bootstrap.Modal(document.getElementById("detailsModal"));
+          detailsModal.show();
+        })
+        .catch(error => {
+          console.error("Error en la solicitud:", error.message);
+          alert(`No se encontró ninguna tarea con el ID ${searchId}`);
+        });
+    }
+
+    // Función para mostrar mensajes de éxito
+    function showSuccessMessage(message) {
+      const successAlert = document.createElement('div');
+      successAlert.classList.add('alert', 'alert-success', 'alert-dismissible', 'fade', 'show');
+      successAlert.setAttribute('role', 'alert');
+      successAlert.innerHTML = `
+        ${message}
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+      `;
+      document.body.appendChild(successAlert);
+      setTimeout(() => {
+        successAlert.remove();
+      }, 3000); // Eliminar el mensaje después de 3 segundos
+    }
+
+    // Función para mostrar mensajes de error
+    function showErrorMessage(message) {
+      const errorAlert = document.createElement('div');
+      errorAlert.classList.add('alert', 'alert-danger', 'alert-dismissible', 'fade', 'show');
+      errorAlert.setAttribute('role', 'alert');
+      errorAlert.innerHTML = `
+        ${message}
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+      `;
+      document.body.appendChild(errorAlert);
+      setTimeout(() => {
+        errorAlert.remove();
+      }, 3000); // Eliminar el mensaje después de 3 segundos
+    }
+  </script>
+</body>
+</html>

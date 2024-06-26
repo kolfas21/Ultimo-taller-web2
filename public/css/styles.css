@@ -1,0 +1,11 @@
+/* Estilos para el tema oscuro */
+.dark-theme {
+  background-color: #333; /* Fondo oscuro */
+  color: #fff; /* Texto claro */
+}
+
+/* Estilos para el tema claro */
+.light-theme {
+  background-color: #fff; /* Fondo claro */
+  color: #333; /* Texto oscuro */
+}
